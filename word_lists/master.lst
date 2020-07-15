@@ -1,0 +1,150 @@
+[Info]
+word count = 21
+
+[ありがとう]
+mora = 5
+pap = 2
+romaji = arigato
+translation = thank you
+notes = 
+
+[でも]
+mora = 2
+pap = 1
+romaji = demo
+translation = but
+notes = 
+
+[おはよう]
+mora = 4
+pap = 0
+romaji = ohayo
+translation = good morning
+notes = Used informally
+
+[せんさい]
+mora = 4
+pap = 0
+romaji = sensai
+translation = teacher
+notes = 
+
+[こんばんは]
+mora = 5
+pap = 5
+romaji = konbanwa
+translation = good evening
+notes = 
+
+[がくせい]
+mora = 4
+pap = 0
+romaji = gakusei
+translation = student
+notes = 
+
+[こんにちは]
+mora = 5
+pap = 5
+romaji = konnichiwa
+translation = hello, hi, good day
+notes = 
+
+[あした]
+mora = 3
+pap = 3
+romaji = ashita
+translation = tomorrow
+notes = 
+
+[また]
+mora = 2
+pap = 0
+romaji = mata
+translation = also, too, as well
+notes = 
+
+[ございます]
+mora = 5
+pap = 4
+romaji = gozaimasu
+translation = there
+notes = 
+
+[すみません]
+mora = 5
+pap = 4
+romaji = sumimasen
+translation = I'm sorry
+notes = 
+
+[いいえ]
+mora = 3
+pap = 3
+romaji = iie
+translation = No (that's okay)
+notes = Used more as a pleasantry.
+
+[いたしまして]
+mora = 6
+pap = 4
+romaji = itashimashite
+translation = you're welcome
+notes = Used in conjunction with dō.
+
+[いただきます]
+mora = 6
+pap = 5
+romaji = itadakimasu
+translation = I (humbly) receive (this meal)
+notes = Used before eating.
+
+[ごちそうさま]
+mora = 6
+pap = 3
+romaji = gochisōsama
+translation = feast
+notes = Used informally as "Thank you for this meal". ごちそうさまでした is the more polite variation.
+
+[ごちそうさまでした]
+mora = 9
+pap = 3
+romaji = gochisōsamadeshita
+translation = Thank you for this meal
+notes = Used as a more polite variation of ごちそうさま.
+
+[おやすみ]
+mora = 4
+pap = 0
+romaji = oyasumi
+translation = good night
+notes = Used informally, おやすみなさい is the more polite variation.
+
+[いっしょに]
+mora = 5
+pap = 0
+romaji = isshoni
+translation = together
+notes = 
+
+[わかり]
+mora = 3
+pap = 3
+romaji = wakari
+translation = understand
+notes = 
+
+[たべる]
+mora = 3
+pap = 2
+romaji = taberu
+translation = eat
+notes = 
+
+[ケーキ]
+mora = 2
+pap = 1
+romaji = kēki
+translation = cake
+notes = 
+

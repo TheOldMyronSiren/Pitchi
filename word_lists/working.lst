@@ -1,0 +1,31 @@
+[Info]
+word count = 4
+
+[ありがとう]
+mora = 5
+pap = 2
+romaji = arigato
+translation = thank you
+notes = 
+
+[でも]
+mora = 2
+pap = 1
+romaji = demo
+translation = but
+notes = 
+
+[おはよう]
+mora = 4
+pap = 0
+romaji = ohayo
+translation = good morning
+notes = Used informally
+
+[せんさい]
+mora = 4
+pap = 0
+romaji = sensai
+translation = teacher
+notes = 
+
