@@ -1,5 +1,5 @@
 
-# ![GitHub Logo](/images/pitch-banner.png)
+# ![GitHub Logo](/images/pitchi-banner.png)
 
 ## What is Pitchi?
 Pitchi is a program aimed at making learning and understanding Japanese and its pitch accent patterns easier. By searching Pitchi lists, you can visually see the pitch accent pattern of a word along with its romaji, definition, and any comments on its usage.
