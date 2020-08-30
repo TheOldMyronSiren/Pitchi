@@ -3457,8 +3457,11 @@ else:
     settings_info.read(settings_dir,encoding='utf-8')
     active_theme = settings_info.get('Settings','theme')
 
-# Create root tk window
-psuedo = tk.Tk()
+# Create root tk w;indow
+if os.name == 'nt':
+    psuedo = tk.Tk()
+if os.name == 'posix':
+    root = tk.Tk()
 
 # Load Theme
 def load_theme():
@@ -3601,21 +3604,23 @@ def load_theme():
 load_theme()
 
 # Configure windows
-psuedo.configure(bg=background)
-psuedo.attributes('-alpha',0.0)
-psuedo.title('Pitchi')
-psuedo.after(1,psuedo.minsize(1000,500))
-
-
-
-root = tk.Toplevel()
-root.minsize(1000,500)
-root.configure(bg=background)
-
 def show_root(event):
     root.deiconify()
+if os.name == 'nt':
+    psuedo.configure(bg=background)
+    psuedo.attributes('-alpha',0.0)
+    psuedo.title('Pitchi')
+    psuedo.after(1,psuedo.minsize(1000,500))
+    
+    psuedo.bind('<FocusIn>',show_root)
 
-psuedo.bind('<FocusIn>',show_root)
+    root = tk.Toplevel()
+    root.minsize(1000,500)
+    root.configure(bg=background)
+    root.overrideredirect(True)
+if os.name == 'posix':
+    root.minsize(1000,500)
+    root.configure(bg=background)
 
 icon_path = unipath.joinpath(data_dir,'icon.ico')
 
@@ -3687,7 +3692,8 @@ word_pap = ''
 word_mora = ''
 
 # Configure windows
-psuedo.iconbitmap(icon_path)
+if os.name == 'nt':
+    psuedo.iconbitmap(icon_path)
 
 window_width = 1000
 window_height = 500
@@ -3700,7 +3706,7 @@ y_cord = (screen_height/2) - (window_height/2)
 root.geometry('%dx%d+%d+%d' % (window_width,window_height,x_cord,y_cord))
 
 header_list = ['Check out Dogen','Perfect pitch is teachable','Its not a fruit','Jubilate, its more than just coffee','No school tomorrow, tell your friends','Keep on going on','Not a game... practice','It builds character','あなたは私を理解できますか？','Where does a snowman go to dance?','Stan LOONA','JinSoul','Choerry','ViVi','Wheres your bread now?','Cheyroo','This is my whole weekend']
-root.overrideredirect(True)
+root.title('Pitchi - '+random.choice(header_list))
 
 # Commands
 def lower_current_page(*a):
@@ -3712,8 +3718,8 @@ def adjust_page_canvas(*event):
     global current_page
     current_page = (result_notebook.index(result_notebook.select()))
     add_word_notes_textbox.change(index=0,minsize=add_word_canvas.winfo_height()-380)
-    add_word_canvas.moveto(add_word_notes_textbox_window,20,((add_word_canvas.winfo_height()/2)-(add_word_notes_textbox.winfo_height()/2))+135)
-    add_word_canvas.moveto(add_word_add_button_window,160,(add_word_canvas.winfo_height())-40)
+    add_word_canvas.move(add_word_notes_textbox_window,20,((add_word_canvas.winfo_height()/2)-(add_word_notes_textbox.winfo_height()/2))+135)
+    add_word_canvas.move(add_word_add_button_window,160,(add_word_canvas.winfo_height())-40)
     if current_page == 0:
         welcome_title.configure(width=result_canvas.winfo_width()-20)
         welcome_title.configure(font=('Quattrocento Sans',clamp(math.floor(result_canvas.winfo_width()/24),18,46),'bold'))
@@ -3755,8 +3761,8 @@ def add_result_page(search,notebook,new_page,word,hira,romaji,trans,mora,pap,not
     canvas = tk.Canvas(container,bg=background,highlightthickness=0,borderwidth=0)
     scrollbar = tk.Scrollbar(container,command=canvas.yview)
     canvas.configure(yscrollcommand=scrollbar.set,scrollregion=(0,0,100,700))
-    canvas.grid(row=0,column=1,sticky='nsew')
     scrollbar.grid(row=0,column=0,sticky='nsew')
+    canvas.grid(row=0,column=1,sticky='nsew')
     canvas.columnconfigure(0,weight=1)
     canvas.rowconfigure(0,weight=1)
     result_canvas_list.insert(new_page,canvas)
@@ -4074,18 +4080,13 @@ def clamp(value,minum,maxum):
     return max(min(value,maxum),minum)
 def resize_results_canvas(event):
     result_notebook.configure(width=result_canvas.winfo_width(),height=result_canvas.winfo_height())
-    top_menu_canvas.delete('lines')
-    top_menu_canvas.create_line(0,30,root.winfo_width(),30,width=4,fill=top_menu_bg,tags='lines')
+    if os.name == 'nt':
+        top_menu_canvas.delete('lines')
+        top_menu_canvas.create_line(0,30,root.winfo_width(),30,width=4,fill=top_menu_bg,tags='lines')
     style.theme_settings(current_theme,{'TNotebook.Tab':{'configure':{'padding':[(result_canvas.winfo_width()-get_tab_length(False))/((page_count+1)*2), 0],'font':('Quattrocento Sans','10')}}})
     # Change tab settings
     #################
-    # Move top menu item
-    #top_menu_canvas.moveto(top_menu_close_window,root.winfo_width()-30,7)
-    #top_menu_canvas.moveto(top_menu_max_window,root.winfo_width()-60,7)
-    #top_menu_canvas.moveto(top_menu_mini_window,root.winfo_width()-90,7)
-    #top_menu_canvas.moveto(top_menu_title,(root.winfo_width()/2)-(top_menu_canvas_title.winfo_width()/2),5)
     # Move sidebar list
-    side_bar_list_canvas.moveto(side_bar_list_window,(side_bar_list_canvas.winfo_width()/2)-(side_bar_list.winfo_width()/2)-5,(side_bar_list_canvas.winfo_height()/2)-(side_bar_list.winfo_height()/2))
     side_bar_list.change(height=side_bar_list_canvas.winfo_height(),width=side_bar_list_canvas.winfo_width()-20)
     # Move result items
     adjust_page_canvas(event)
@@ -4272,7 +4273,8 @@ def reset_settings_page():
     global settings
     global settings_psuedo
     settings.destroy()
-    settings_psuedo.destroy()
+    if os.name == 'nt':
+        settings_psuedo.destroy()
     settings = None
     settings_psuedo = None
 def show_settings(event):
@@ -4300,12 +4302,20 @@ def update_widgets():
     global search_button_image
     global search_bar_image
     global style
-    # Update psuedo windows
-    psuedo.configure(bg=background)
-    settings_psuedo.configure(bg=background)
+    # Update psuedo windows/Windows specific
+    if os.name == 'nt':
+        psuedo.configure(bg=background)
+        settings_psuedo.configure(bg=background)
+        settings_top_menu.configure(bg=top_menu_bg)
+        settings_top_menu_title.change(bg=top_menu_bg,fg=text_fg)
+        settings_top_menu_close_button.change(bg=top_menu_bg,image=exit_button_image,activebackground=top_menu_bg)
+        # Update top menu
+        top_menu_canvas.configure(bg=top_menu_bg)
+        top_menu_canvas_title.change(bg=top_menu_bg,fg=text_fg)
+        top_menu_canvas_close.change(bg=top_menu_bg,activebackground=top_menu_bg,image=exit_button_image)
+        top_menu_canvas_max.change(bg=top_menu_bg,activebackground=top_menu_bg,image=max_button_image)
+        top_menu_canvas_mini.change(bg=top_menu_bg,activebackground=top_menu_bg,image=mini_button_image)
     # Update settings window
-    settings_top_menu.configure(bg=top_menu_bg)
-    settings_top_menu_title.change(bg=top_menu_bg,fg=text_fg)
     settings_canvas.configure(bg=background)
     settings_frame.configure(bg=half_color(background))
     settings_theme_label.change(bg=text_bg,fg=text_fg)
@@ -4323,13 +4333,6 @@ def update_widgets():
     settings_master_update_button.configure(bg=background,fg=text_fg,activebackground=background,activeforeground=text_fg,highlightbackground=text_bg)
     style.configure('custom.Horizontal.TProgressbar',foregroud=highlight_bg,background=text_bg)
     settings_master_update_progress.configure(style='custom.Horizontal.TProgressbar')
-    settings_top_menu_close_button.change(bg=top_menu_bg,image=exit_button_image,activebackground=top_menu_bg)
-    # Update top menu
-    top_menu_canvas.configure(bg=top_menu_bg)
-    top_menu_canvas_title.change(bg=top_menu_bg,fg=text_fg)
-    top_menu_canvas_close.change(bg=top_menu_bg,activebackground=top_menu_bg,image=exit_button_image)
-    top_menu_canvas_max.change(bg=top_menu_bg,activebackground=top_menu_bg,image=max_button_image)
-    top_menu_canvas_mini.change(bg=top_menu_bg,activebackground=top_menu_bg,image=mini_button_image)
     # Update Pitchi title
     pitchi_title_canvas.configure(bg=title_bg)
     pitchi_title_frame.configure(bg=title_bg)
@@ -4439,16 +4442,19 @@ def settings_page():
     global dl_progress
     half_color(background)
     if settings == None:
-        settings_psuedo = tk.Tk()
-        settings_psuedo.configure(bg=background)
-        settings_psuedo.attributes('-alpha',0.0)
-        settings_psuedo.title('Pitchi Settings')
-        settings_psuedo.geometry('400x400')
-        settings_psuedo.iconbitmap(unipath.joinpath(data_dir,'icon.ico'))
-        settings_psuedo.bind('<FocusIn>',show_settings)
-        settings_psuedo.protocol('WM_DELETE_WINDOW',lambda:reset_settings_page())
-
-        settings = tk.Toplevel()
+        if os.name == 'nt':
+            settings_psuedo = tk.Tk()
+            settings_psuedo.configure(bg=background)
+            settings_psuedo.attributes('-alpha',0.0)
+            settings_psuedo.title('Pitchi Settings')
+            settings_psuedo.geometry('400x400')
+            settings_psuedo.iconbitmap(unipath.joinpath(data_dir,'icon.ico'))
+            settings_psuedo.bind('<FocusIn>',show_settings)
+            settings_psuedo.protocol('WM_DELETE_WINDOW',lambda:reset_settings_page())
+            settings = tk.Toplevel()
+            settings.overrideredirect(True)
+        if os.name == 'posix':
+            settings = tk.Tk()
         settings.focus()
         settings.title('Settings')
         settings.protocol('WM_DELETE_WINDOW',lambda:reset_settings_page())
@@ -4461,19 +4467,20 @@ def settings_page():
         x_cord = (screen_width/2) - (window_width/2)
         y_cord = (screen_height/2) - (window_height/2)
         settings.geometry('%dx%d+%d+%d' % (window_width,window_height,x_cord,y_cord))
-        settings.overrideredirect(True)
         settings.grid_propagate(False)
         settings_frame = tk.Frame(settings,bg=half_color(background),borderwidth=1,height=window_height,width=window_width)
         settings_frame.grid(row=0,column=0,sticky='nsew')
         settings_frame.grid_propagate(False)
-        settings_top_menu = tk.Canvas(settings_frame,bg=top_menu_bg,highlightthickness=0,width=window_width-2,height=30)
-        settings_top_menu_title = static_label(settings_top_menu,bg=top_menu_bg,fg=text_fg,font=('Quattrocento Sans',10),text='Settings',anchor='c',pady=3)
-        settings_top_menu_close_button = static_button(settings_top_menu,bg=top_menu_bg,activebackground=top_menu_bg,width=12,height=12,borderwidth=0,image=exit_button_image,command=lambda:close_settings(),anchor='c')
-        settings_top_menu.pack_propagate(False)
-        settings_top_menu_title.pack(side='left',padx=10)
-        settings_top_menu_close_button.pack(side='right',padx=10)
-
-        settings_canvas = tk.Canvas(settings_frame,bg=background,highlightthickness=0,height=368,width=window_width-2)
+        if os.name == 'nt':
+            settings_top_menu = tk.Canvas(settings_frame,bg=top_menu_bg,highlightthickness=0,width=window_width-2,height=30)
+            settings_top_menu_title = static_label(settings_top_menu,bg=top_menu_bg,fg=text_fg,font=('Quattrocento Sans',10),text='Settings',anchor='c',pady=3)
+            settings_top_menu_close_button = static_button(settings_top_menu,bg=top_menu_bg,activebackground=top_menu_bg,width=12,height=12,borderwidth=0,image=exit_button_image,command=lambda:close_settings(),anchor='c')
+            settings_top_menu.pack_propagate(False)
+            settings_top_menu_title.pack(side='left',padx=10)
+            settings_top_menu_close_button.pack(side='right',padx=10)
+            settings_canvas = tk.Canvas(settings_frame,bg=background,highlightthickness=0,height=368,width=window_width-2)
+        elif os.name == 'posix':
+            settings_canvas = tk.Canvas(settings_frame,bg=background,highlightthickness=0,height=400,width=window_width-2)
         settings_canvas.grid_propagate(False)
         settings_file_label = static_label(settings_canvas,bg=text_bg,fg=text_fg,text='File',font=('Quattrocento Sans',13),anchor='w')
         settings_file_label.change_frame(bg=text_bg)
@@ -4486,7 +4493,7 @@ def settings_page():
         settings_theme_label.change(width=10)
 
         settings_theme_var = tk.StringVar(settings_canvas)
-        settings_theme_var.set(active_theme.title())
+        settings_theme_var.set(active_theme)
 
         settings_theme_entry = tk.OptionMenu(settings_canvas,settings_theme_var,*(find_themes()))
         settings_theme_entry.configure(relief='flat',height=1,bg=background,fg=text_fg,width=15,highlightthickness=2,highlightbackground=text_bg,font=('Quattrocento Sans',12),activebackground=background,activeforeground=text_fg)
@@ -4501,8 +4508,11 @@ def settings_page():
         settings_master_update_button = tk.Button(settings_canvas,bg=background,fg=text_fg,text='Update Master.lst',font=('Quattrocento Sans',12),relief='flat',borderwidth=0,activebackgroun=background,activeforeground=highlight_bg,anchor='c',command=download_master)
         settings_master_update_progress = ttk.Progressbar(settings_canvas,orient='horizontal',length=200,mode='determinate')
 
-        settings_top_menu.grid(row=0,column=0,sticky='nsew')
-        settings_canvas.grid(row=1,column=0,sticky='nsew')
+        if os.name == 'nt':
+            settings_top_menu.grid(row=0,column=0,sticky='nsew')
+            settings_canvas.grid(row=1,column=0,sticky='nsew')
+        elif os.name == 'posix':
+            settings_canvas.grid(row=0,column=0,sticky='nsew')
 
         settings_canvas.columnconfigure(0,weight=1)
         settings_canvas.columnconfigure(1,weight=1)
@@ -4518,20 +4528,20 @@ def settings_page():
         settings_master_update_info.grid(row=5,column=0,columnspan=3,sticky='nsew',padx=10)
         settings_master_update_button.grid(row=6,column=1,sticky='nsew',pady=10,padx=20)
         settings_master_update_progress.grid(row=7,column=1,sticky='nsew')
-
-        settings_top_menu.bind('<ButtonPress-1>',lambda event:start_move(event,settings))
-        settings_top_menu.bind('<ButtonRelease-1>',lambda event:stop_move(event,settings))
-        settings_top_menu.bind('<B1-Motion>',lambda event:move_window(event,settings))
-        settings_top_menu_title.bind('<ButtonPress-1>',lambda event:start_move(event,settings))
-        settings_top_menu_title.bind('<ButtonRelease-1>',lambda event:stop_move(event,settings))
-        settings_top_menu_title.bind('<B1-Motion>',lambda event:move_window(event,settings))
+        
+        if os.name == 'nt':
+            settings_top_menu.bind('<ButtonPress-1>',lambda event:start_move(event,settings))
+            settings_top_menu.bind('<ButtonRelease-1>',lambda event:stop_move(event,settings))
+            settings_top_menu.bind('<B1-Motion>',lambda event:move_window(event,settings))
+            settings_top_menu_title.bind('<ButtonPress-1>',lambda event:start_move(event,settings))
+            settings_top_menu_title.bind('<ButtonRelease-1>',lambda event:stop_move(event,settings))
+            settings_top_menu_title.bind('<B1-Motion>',lambda event:move_window(event,settings))
     else:
         settings.focus()
 def find_themes():
     tmp_lst = [x for x in os.listdir(themes_dir)]
-    return [theme_name.title() for theme_name in tmp_lst]
+    return [theme_name for theme_name in tmp_lst]
 def update_progress_bar(current,total,width):
-    print((current/total)*100)
     settings_master_update_progress.step((current/total)*99)
 def download_master():
     global active_list
@@ -4539,7 +4549,7 @@ def download_master():
     if confirm == True:
         os.remove(unipath.joinpath(words_l_dir,'master.lst'))
         settings.lift()
-        wget.download('https://raw.githubusercontent.com/ChoerrySoul/Pitchi/master/word_lists/master.lst',unipath.joinpath(words_l_dir,'master.lst'),bar=update_progress_bar)
+        wget.download('https://raw.githubusercontent.com/ChoerrySoul/Pitchi/master/word_lists/master.lst',os.path.abspath(unipath.joinpath(words_l_dir,'master.lst')),bar=update_progress_bar)
         tk.messagebox.showinfo('Download New Master.lst','Your local master list has been replaced!',icon='info')
         settings.lift()
         settings_master_update_progress.configure(value=0)
@@ -4704,24 +4714,25 @@ logo_path = unipath.joinpath(data_dir,'logo.png')
 logo_image = ImageTk.PhotoImage((Image.open(logo_path)).resize((64,64)))
 
 # Create top menu
-top_menu_canvas = tk.Canvas(root,bg=top_menu_bg,highlightthickness=0,height=30,width=700)
-top_menu_canvas.create_line(0,18,top_menu_canvas.winfo_width(),18,width=2,fill='blue',tags='lines')
-top_menu_canvas_close = static_button(top_menu_canvas,bg=top_menu_bg,activebackground=top_menu_bg,width=12,height=12,borderwidth=0,image=exit_button_image,command = lambda: [cancel_threads(),close_windows()])
-top_menu_canvas_max = static_button(top_menu_canvas,bg=top_menu_bg,activebackground=top_menu_bg,width=12,height=12,borderwidth=0,image=max_button_image,command = lambda: toggle_max())
-top_menu_canvas_mini = static_button(top_menu_canvas,bg=top_menu_bg,activebackground=top_menu_bg,width=12,height=12,borderwidth=0,image=mini_button_image,command = lambda: minimize())
-top_menu_canvas_title = static_label(top_menu_canvas,bg=top_menu_bg,fg=text_fg,font=('Quattrocento Sans',10),text='Pitchi - '+random.choice(header_list),anchor='c')
+if os.name == 'nt':
+    top_menu_canvas = tk.Canvas(root,bg=top_menu_bg,highlightthickness=0,height=30,width=700)
+    top_menu_canvas.create_line(0,18,top_menu_canvas.winfo_width(),18,width=2,fill='blue',tags='lines')
+    top_menu_canvas_close = static_button(top_menu_canvas,bg=top_menu_bg,activebackground=top_menu_bg,width=12,height=12,borderwidth=0,image=exit_button_image,command = lambda: [cancel_threads(),close_windows()])
+    top_menu_canvas_max = static_button(top_menu_canvas,bg=top_menu_bg,activebackground=top_menu_bg,width=12,height=12,borderwidth=0,image=max_button_image,command = lambda: toggle_max())
+    top_menu_canvas_mini = static_button(top_menu_canvas,bg=top_menu_bg,activebackground=top_menu_bg,width=12,height=12,borderwidth=0,image=mini_button_image,command = lambda: minimize())
+    top_menu_canvas_title = static_label(top_menu_canvas,bg=top_menu_bg,fg=text_fg,font=('Quattrocento Sans',10),text='Pitchi - '+random.choice(header_list),anchor='c')
 
-top_menu_canvas_close.pack(side='right',padx=10)
-top_menu_canvas_max.pack(side='right',padx=10)
-top_menu_canvas_mini.pack(side='right',padx=10)
-top_menu_canvas_title.pack(side='left',padx=10)
+    top_menu_canvas_close.pack(side='right',padx=10)
+    top_menu_canvas_max.pack(side='right',padx=10)
+    top_menu_canvas_mini.pack(side='right',padx=10)
+    top_menu_canvas_title.pack(side='left',padx=10)
 
-top_menu_canvas.bind('<ButtonPress-1>',lambda event:start_move(event,root))
-top_menu_canvas.bind('<ButtonRelease-1>',lambda event:stop_move(event,root))
-top_menu_canvas.bind('<B1-Motion>',lambda event:move_window(event,root))
-top_menu_canvas_title.bind(event='<ButtonPress-1>',command=lambda event:start_move(event,root))
-top_menu_canvas_title.bind(event='<ButtonRelease-1>',command=lambda event:stop_move(event,root))
-top_menu_canvas_title.bind(event='<B1-Motion>',command=lambda event:move_window(event,root))
+    top_menu_canvas.bind('<ButtonPress-1>',lambda event:start_move(event,root))
+    top_menu_canvas.bind('<ButtonRelease-1>',lambda event:stop_move(event,root))
+    top_menu_canvas.bind('<B1-Motion>',lambda event:move_window(event,root))
+    top_menu_canvas_title.bind(event='<ButtonPress-1>',command=lambda event:start_move(event,root))
+    top_menu_canvas_title.bind(event='<ButtonRelease-1>',command=lambda event:stop_move(event,root))
+    top_menu_canvas_title.bind(event='<B1-Motion>',command=lambda event:move_window(event,root))
 
 
 # Create pitchi title
@@ -4780,7 +4791,7 @@ side_bar_list.bind(event='<FocusOut>',command=deselect_side_list)
 side_bar_list_scrollbar.configure(command=side_bar_list_global.yview)
 side_bar_list_scrollbar.pack(side='right',fill='y')
 
-side_bar_list_window = side_bar_list_canvas.create_window(0,0,window=side_bar_list)
+side_bar_list.pack()
 
 # Create result area
 result_canvas = tk.Canvas(root,bg=background,width=700,highlightthickness=0,borderwidth=0)
@@ -4894,7 +4905,8 @@ root.grid_rowconfigure(4,weight=1,minsize=0)
 result_canvas.bind('<Configure>',resize_results_canvas)
 
 # Build grid
-top_menu_canvas.grid(row=0,column=0,columnspan=3,sticky='nsew')
+if os.name == 'nt':
+    top_menu_canvas.grid(row=0,column=0,columnspan=3,sticky='nsew')
 pitchi_title_canvas.grid(row=1,column=0,rowspan=2,sticky='nsew')
 top_header_canvas.grid(row=1,column=1,sticky='nsew')
 result_canvas.grid(row=2,column=1,rowspan=3,sticky='nsew')
