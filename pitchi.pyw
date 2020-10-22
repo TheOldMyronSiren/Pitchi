@@ -17,6 +17,7 @@ import screeninfo
 import threading
 import keyboard
 import wget
+import time
 
 local_dir = os.path.dirname(os.path.realpath(__file__))
 
@@ -3444,18 +3445,34 @@ if not os.path.exists(unipath.joinpath(words_l_dir,'master.lst')):
     master_lst_file.close()
 
 # Create settings
-if not path.exists(settings_dir):
+def create_new_settings():
+    global active_theme
     new_settings_info = configparser.ConfigParser()
     new_settings_info.add_section('Settings')
     new_settings_info.set('Settings','theme','default')
+    new_settings_info.set('Settings','romaji','true')
     active_theme = 'default'
     new_settings_file = open(settings_dir,'w',encoding='utf-8')
     new_settings_info.write(new_settings_file)
     new_settings_file.close()
+# Gather settings
+if not path.exists(settings_dir):
+    create_new_settings()
+settings_info = configparser.ConfigParser()
+settings_info.read(settings_dir,encoding='utf-8')
+if settings_info.has_section('Settings') == False:
+    os.remove(settings_dir)
+    create_new_settings()
 else:
-    settings_info = configparser.ConfigParser()
-    settings_info.read(settings_dir,encoding='utf-8')
-    active_theme = settings_info.get('Settings','theme')
+    if settings_info.has_option('Settings','theme') == False:
+        settings_info.set('Settings','theme','default')
+    if settings_info.has_option('Settings','romaji') == False:
+        settings_info.set('Settings','romaji','1')
+    settings_file = open(settings_dir,'w',encoding='utf-8')
+    settings_info.write(settings_file)
+    settings_file.close()
+active_theme = settings_info.get('Settings','theme')
+show_romaji = settings_info.get('Settings','romaji').lower()
 
 # Create root tk w;indow
 if os.name == 'nt':
@@ -3658,6 +3675,7 @@ settings = None
 settings_psuedo = None
 settings_frame = None
 dl_progress = 0
+result_scroll = False
 
 # Result pages variables
 current_page = 0
@@ -3718,8 +3736,8 @@ def adjust_page_canvas(*event):
     global current_page
     current_page = (result_notebook.index(result_notebook.select()))
     add_word_notes_textbox.change(index=0,minsize=add_word_canvas.winfo_height()-380)
-    add_word_canvas.move(add_word_notes_textbox_window,20,((add_word_canvas.winfo_height()/2)-(add_word_notes_textbox.winfo_height()/2))+135)
-    add_word_canvas.move(add_word_add_button_window,160,(add_word_canvas.winfo_height())-40)
+    add_word_canvas.moveto(add_word_notes_textbox_window,20,((add_word_canvas.winfo_height()/2)-(add_word_notes_textbox.winfo_height()/2))+135)
+    add_word_canvas.moveto(add_word_add_button_window,160,(add_word_canvas.winfo_height())-40)
     if current_page == 0:
         welcome_title.configure(width=result_canvas.winfo_width()-20)
         welcome_title.configure(font=('Quattrocento Sans',clamp(math.floor(result_canvas.winfo_width()/24),18,46),'bold'))
@@ -3742,7 +3760,10 @@ def adjust_page_canvas(*event):
         result_canvas_list[current_page].moveto(subframe_window_list[current_page],(result_canvas.winfo_width()/2)-(subframe_list[current_page].winfo_width()/2),0)
         space_filler_list[current_page].configure(bg=background,width=result_canvas.winfo_width())
         redraw_pap(current_page)
-
+def scroll_result_page(event):
+    if current_page != 0:
+        if result_canvas_list[current_page].yview() != (0.0,1.0) and result_scroll == True:
+            result_canvas_list[current_page].yview_scroll(int(-1*(event.delta/120)),'units')
 def add_result_page(search,notebook,new_page,word,hira,romaji,trans,mora,pap,notes):
     global result_canvas_list
     global result_romaji_label_list
@@ -3759,7 +3780,7 @@ def add_result_page(search,notebook,new_page,word,hira,romaji,trans,mora,pap,not
     container.columnconfigure(1,weight=1)
     container.rowconfigure(0,weight=1)
     canvas = tk.Canvas(container,bg=background,highlightthickness=0,borderwidth=0)
-    scrollbar = tk.Scrollbar(container,command=canvas.yview)
+    scrollbar = tk.Scrollbar(container,command=canvas.yview,width=15)
     canvas.configure(yscrollcommand=scrollbar.set,scrollregion=(0,0,100,700))
     scrollbar.grid(row=0,column=0,sticky='nsew')
     canvas.grid(row=0,column=1,sticky='nsew')
@@ -3770,43 +3791,41 @@ def add_result_page(search,notebook,new_page,word,hira,romaji,trans,mora,pap,not
     subframe_list.insert(new_page,tk.Frame(canvas,bg=background,width=result_canvas.winfo_width()))
     subframe = subframe_list[new_page]
     subframe.grid(row=0,column=0,sticky='nsew')
-    subframe.columnconfigure(0)
     subframe.rowconfigure(4,minsize=50)
     style.theme_settings(current_theme,{'TNotebook.Tab':{'configure':{'padding':[(result_canvas.winfo_width()-get_tab_length(False))/((page_count+2)*2), 0],'font':('Quattrocento Sans','10')}}})
-    if search == True: # Check if search is a shift search/requires a new tab
-        style.theme_settings(current_theme,{'TNotebook.Tab':{'configure':{'padding':[(result_canvas.winfo_width()-get_tab_length(False))/((page_count+2)*2), 0],'font':('Quattrocento Sans','10')}}})
-        result_label_list.insert(new_page,static_label(subframe,text=word,font=('Quattrocento Sans',24),height=80,bg=background,fg=result_fg))
-        result_romaji_label_list.insert(new_page,static_label(subframe,text=romaji,font=('Quattrocento Sans',20),height=40,bg=background,fg=result_fg))
-        result_hira_container_list.insert(new_page,tk.Frame(subframe))
-        result_hira_canvas_list.insert(new_page,tk.Canvas(result_hira_container_list[new_page],bg=background,highlightthickness=0))
-        result_hira_canvas_list[new_page].grid(row=0,column=0)
+    ################
+    result_label_list.insert(new_page,static_label(subframe,text=word,font=('MS PMincho',24),height=80,bg=background,fg=result_fg))
+    result_romaji_label_list.insert(new_page,static_label(subframe,text=romaji,font=('MS PMincho',20),height=40,bg=background,fg=result_fg))
+    result_hira_container_list.insert(new_page,tk.Frame(subframe))
+    result_hira_canvas_list.insert(new_page,tk.Canvas(result_hira_container_list[new_page],bg=background,highlightthickness=0))
+    result_hira_canvas_list[new_page].grid(row=0,column=0)
         
-        result_pap_container_list.insert(new_page,tk.Frame(subframe,bg=background))
-        result_pap_canvas_list.insert(new_page,tk.Canvas(result_pap_container_list[new_page],highlightthickness=0,height=200,bg=background))
-        result_pap_canvas_list[new_page].grid(row=0,column=0)
+    result_pap_container_list.insert(new_page,tk.Frame(subframe,bg=background))
+    result_pap_canvas_list.insert(new_page,tk.Canvas(result_pap_container_list[new_page],highlightthickness=0,height=200,bg=background))
+    result_pap_canvas_list[new_page].grid(row=0,column=0)
 
-        space_filler_list.insert(new_page,tk.Canvas(subframe,bg=background,height=50,highlightthickness=0,width=result_canvas.winfo_width()))
-        space_filler = space_filler_list[new_page]
+    space_filler_list.insert(new_page,tk.Canvas(subframe,bg=background,height=50,highlightthickness=0,width=result_canvas.winfo_width()))
+    space_filler = space_filler_list[new_page]
 
-        notes_seperator_list.insert(new_page,tk.Label(subframe,bg=header_bg,font=('Quattrocento Sans',18),text='Notes:',fg=text_fg,anchor='w',padx=10))
+    notes_seperator_list.insert(new_page,tk.Label(subframe,bg=header_bg,font=('MS PMincho',18),text='Notes:',fg=text_fg,anchor='w',padx=10))
 
-        result_trans_label_list.insert(new_page,static_label(subframe,text=trans,font=('Quattrocento Sans',22),bg=background,fg=result_fg,anchor='c'))
-        result_notes_label_list.insert(new_page,tk.Message(subframe,text=notes,font=('Quattrocento Sans',22),width=result_canvas.winfo_width(),bg=background,fg=result_fg,justify='left',anchor='w'))
+    result_trans_label_list.insert(new_page,static_label(subframe,text=trans,font=('MS PMincho',22),bg=background,fg=result_fg,anchor='c'))
+    result_notes_label_list.insert(new_page,tk.Message(subframe,text=notes,font=('MS PMincho',22),width=result_canvas.winfo_width(),bg=background,fg=result_fg,justify='left',anchor='w'))
 
-        result_label_list[new_page].grid(row=0,column=0)
+    result_label_list[new_page].grid(row=0,column=0)
+    if show_romaji == 'true':
         result_romaji_label_list[new_page].grid(row=1,column=0)
-        result_pap_container_list[new_page].grid(row=2,column=0)
-        result_hira_container_list[new_page].grid(row=3,column=0)
-        result_trans_label_list[new_page].grid(row=5,column=0)
-        space_filler.grid(row=6,column=0,sticky='nsew')
-        notes_seperator_list[new_page].grid(row=7,column=0,sticky='ew')
-        result_notes_label_list[new_page].grid(row=8,column=0,sticky='ew')
-        draw_pap(pap,mora,word,new_page)
-        root.update_idletasks()
-        subframe_window_list.insert(new_page,canvas.create_window((result_canvas.winfo_width()/2)-(subframe_list[new_page].winfo_width()/2),100,window=subframe))
-        thread1 = threading.Timer(0.001,adjust_page_canvas)
-        thread1.start()
-        ################
+    result_pap_container_list[new_page].grid(row=2,column=0)
+    result_hira_container_list[new_page].grid(row=3,column=0)
+    result_trans_label_list[new_page].grid(row=5,column=0)
+    space_filler.grid(row=6,column=0,sticky='nsew')
+    notes_seperator_list[new_page].grid(row=7,column=0,sticky='ew')
+    result_notes_label_list[new_page].grid(row=8,column=0,sticky='ew')
+    draw_pap(pap,mora,word,new_page)
+    subframe_window_list.insert(new_page,canvas.create_window((result_canvas.winfo_width()/2)-(subframe_list[new_page].winfo_width()/2),100,window=subframe))
+    thread1 = threading.Timer(0.01,adjust_page_canvas)
+    thread1.start()
+    ################
     return container
 def solid_circle(scx,scy,page,spacing):
     size = spacing*0.2
@@ -4025,6 +4044,7 @@ def search_cmd(*a,newtab,target):
             word_notes_list.insert(current_page-1,word_notes)
             redraw_pap(current_page)
             adjust_page_canvas()
+    search_clear()
 def recount_words():
     global word_count
     global word_count_label_var
@@ -4079,15 +4099,11 @@ def make_rgb(rgb):
 def clamp(value,minum,maxum):
     return max(min(value,maxum),minum)
 def resize_results_canvas(event):
-    result_notebook.configure(width=result_canvas.winfo_width(),height=result_canvas.winfo_height())
+    result_notebook.configure(width=result_canvas.winfo_width(),height=result_canvas.winfo_height()-22)
     if os.name == 'nt':
         top_menu_canvas.delete('lines')
         top_menu_canvas.create_line(0,30,root.winfo_width(),30,width=4,fill=top_menu_bg,tags='lines')
     style.theme_settings(current_theme,{'TNotebook.Tab':{'configure':{'padding':[(result_canvas.winfo_width()-get_tab_length(False))/((page_count+1)*2), 0],'font':('Quattrocento Sans','10')}}})
-    # Change tab settings
-    #################
-    # Move sidebar list
-    side_bar_list.change(height=side_bar_list_canvas.winfo_height(),width=side_bar_list_canvas.winfo_width()-20)
     # Move result items
     adjust_page_canvas(event)
 def toggle_max():
@@ -4104,15 +4120,16 @@ def toggle_max():
         root_size = 'max'
         root_bot_right_corner.lower()
         top_menu_canvas_max.button.configure(image=window_button_image)
-        root_bot_right_corner.lift()
-        adjust_page_canvas()
+        thread1 = threading.Timer(0.02,adjust_page_canvas)
+        thread1.start()
     else:
         root.geometry(('%dx%d+'+(str(math.floor(root_last_xpos)))+'+'+(str(math.floor(root_last_ypos)))) % (1000,500))
         window_mode_called = True
         root_size = 'window'
         top_menu_canvas_max.button.configure(image=max_button_image)
         root_bot_right_corner.lift()
-        adjust_page_canvas()
+        thread1 = threading.Timer(0.02,adjust_page_canvas)
+        thread1.start()
 def minimize():
     global window_mode_called
     window_mode_called = False
@@ -4148,6 +4165,8 @@ def search_update(event):
     word = side_list.get(index)
     side_bar_search_box.delete(start=0,finish='end')
     side_bar_search_box.insert(start=0,text=word)
+def search_clear():
+    side_bar_search_box.delete(start=0,finish='end')
 def list_search(event):
     side_list = event.widget
     index = int(side_list.curselection()[0])
@@ -4160,7 +4179,7 @@ def side_list_double_click(event):
     side_list = event.widget
     index = int(side_list.curselection()[0])
     word = side_list.get(index)
-    if keyboard.is_pressed('n'):
+    if keyboard.is_pressed('shift'):
         search_cmd(newtab=True,target=word)
     else:
         search_cmd(newtab=False,target=word)
@@ -4320,13 +4339,20 @@ def update_widgets():
     settings_frame.configure(bg=half_color(background))
     settings_theme_label.change(bg=text_bg,fg=text_fg)
     settings_theme_label.change_frame(bg=text_bg)
+    # General settings
+    settings_general_label.change(bg=text_bg,fg=text_fg)
+    settings_general_label.change_frame(bg=text_bg)
+    settings_romaji_checkbox.configure(bg=background,fg=text_fg,activebackground=background,activeforeground=text_fg,highlightbackground=text_bg,selectcolor=background)
+    # File settings
     settings_file_label.change(bg=text_bg,fg=text_fg)
     settings_file_label.change_frame(bg=text_bg)
     settings_file_open_button.configure(bg=background,fg=text_fg,activebackground=background,activeforeground=text_fg,highlightbackground=text_bg)
     settings_file_import_button.configure(bg=background,fg=text_fg,activebackground=background,activeforeground=text_fg,highlightbackground=text_bg)
+    # Theme settings
     settings_theme_entry.configure(bg=background,fg=text_fg,activebackground=background,activeforeground=text_fg,highlightbackground=text_bg)
     settings_theme_entry['menu'].configure(bg=background,fg=text_fg,activebackground=highlight_bg)
     settings_apply_button.configure(bg=background,fg=text_fg,activebackground=background,activeforeground=highlight_bg)
+    # Update master list
     settings_master_update_label.change(bg=text_bg,fg=text_fg)
     settings_master_update_label.change_frame(bg=text_bg)
     settings_master_update_info.configure(bg=background,fg=text_fg)
@@ -4421,6 +4447,34 @@ def half_color(color):
         b = round(int(color_rgb[2])+(255-int(color_rgb[2]))/2)
     new_rgb = (r,g,b)
     return make_rgb((new_rgb))
+def update_romaji():
+    global show_romaji
+    settings_info = configparser.ConfigParser()
+    settings_info.read(settings_dir,encoding='utf-8')
+    if show_romaji == 'true':
+        settings_info.set('Settings','romaji','true')
+    elif show_romaji == 'false':
+        settings_info.set('Settings','romaji','false')
+    settings_file = open(settings_dir,'w',encoding='utf-8')
+    settings_info.write(settings_file)
+    settings_file.close()
+    for i in range(1,page_count+1):
+        if show_romaji == 'false':
+            result_romaji_label_list[i].grid_forget()
+            thread1 = threading.Timer(0.02,adjust_page_canvas)
+            thread1.start()
+        else:
+            result_romaji_label_list[i].grid(row=1,column=0)
+            thread1 = threading.Timer(0.02,adjust_page_canvas)
+            thread1.start()
+def toggle_romaji():
+    global show_romaji
+    if show_romaji == 'false':
+        show_romaji = 'true'
+        update_romaji()
+    else:
+        show_romaji = 'false'
+        update_romaji()
 def settings_page():
     global settings
     global settings_frame
@@ -4428,6 +4482,10 @@ def settings_page():
     global settings_top_menu
     global settings_top_menu_title
     global settings_canvas
+    global settings_general_label
+    global show_romaji
+    global settings_general_label
+    global settings_romaji_checkbox
     global settings_file_label
     global settings_file_open_button
     global settings_file_import_button
@@ -4440,6 +4498,7 @@ def settings_page():
     global settings_master_update_progress
     global settings_top_menu_close_button
     global dl_progress
+    dummy = ''
     half_color(background)
     if settings == None:
         if os.name == 'nt':
@@ -4461,7 +4520,7 @@ def settings_page():
         settings.configure(bg=background)
         settings.resizable(0,0)
         window_width = 400
-        window_height = 400
+        window_height = 500
         screen_width = root.winfo_screenwidth()
         screen_height = root.winfo_screenheight()
         x_cord = (screen_width/2) - (window_width/2)
@@ -4469,6 +4528,7 @@ def settings_page():
         settings.geometry('%dx%d+%d+%d' % (window_width,window_height,x_cord,y_cord))
         settings.grid_propagate(False)
         settings_frame = tk.Frame(settings,bg=half_color(background),borderwidth=1,height=window_height,width=window_width)
+        settings_frame.rowconfigure(1,weight=1)
         settings_frame.grid(row=0,column=0,sticky='nsew')
         settings_frame.grid_propagate(False)
         if os.name == 'nt':
@@ -4478,16 +4538,24 @@ def settings_page():
             settings_top_menu.pack_propagate(False)
             settings_top_menu_title.pack(side='left',padx=10)
             settings_top_menu_close_button.pack(side='right',padx=10)
-            settings_canvas = tk.Canvas(settings_frame,bg=background,highlightthickness=0,height=368,width=window_width-2)
+            settings_canvas = tk.Canvas(settings_frame,bg=background,highlightthickness=0,width=window_width-2)
         elif os.name == 'posix':
             settings_canvas = tk.Canvas(settings_frame,bg=background,highlightthickness=0,height=400,width=window_width-2)
         settings_canvas.grid_propagate(False)
+        # General settings
+        settings_general_label = static_label(settings_canvas,bg=text_bg,fg=text_fg,text='General',font=('Quattrocento Sans',13),anchor='w')
+        settings_general_label.change_frame(bg=text_bg)
+        settings_general_label.change(width=10)
+        settings_romaji_checkbox = tk.Checkbutton(settings_canvas,selectcolor=background,bg=background,fg=text_fg,activebackground=background,activeforeground=text_fg,highlightbackground=text_bg,relief='flat',borderwidth=0,text='Show romaji',font=('Quattrocento Sans',12),variable=dummy,onvalue='True',offvalue='False',padx=20,command=toggle_romaji)
+        if show_romaji == 'true':
+            settings_romaji_checkbox.select()
+        # File settings
         settings_file_label = static_label(settings_canvas,bg=text_bg,fg=text_fg,text='File',font=('Quattrocento Sans',13),anchor='w')
         settings_file_label.change_frame(bg=text_bg)
         settings_file_label.change(width=10)
         settings_file_open_button = tk.Button(settings_canvas,bg=background,fg=text_fg,text='Open...',font=('Quattrocento Sans',12),relief='flat',borderwidth=0,activebackgroun=background,activeforeground=highlight_bg,anchor='c',command=open_list)
         settings_file_import_button = tk.Button(settings_canvas,bg=background,fg=text_fg,text='Import...',font=('Quattrocento Sans',12),relief='flat',borderwidth=0,activebackgroun=background,activeforeground=highlight_bg,anchor='c',command=import_list)
-
+        # Theme settings
         settings_theme_label = static_label(settings_canvas,bg=text_bg,fg=text_fg,text='Theme',font=('Quattrocento Sans',13),anchor='w')
         settings_theme_label.change_frame(bg=text_bg)
         settings_theme_label.change(width=10)
@@ -4500,7 +4568,7 @@ def settings_page():
         settings_theme_entry['menu'].configure(bg=background,fg=text_fg,borderwidth=0,activebackground=highlight_bg,font=('Quattrocento Sans',10))
 
         settings_apply_button = tk.Button(settings_canvas,text='Apply',font=('Quattrocento Sans',12),bg=background,fg=text_fg,command=lambda theme=settings_theme_var:settings_apply(theme),relief='flat',borderwidth=0,activebackgroun=background,activeforeground=highlight_bg,anchor='c')
-
+        # Update master list
         settings_master_update_label = static_label(settings_canvas,bg=text_bg,fg=text_fg,text='Update Master List',font=('Quattrocento Sans',13),anchor='w')
         settings_master_update_label.change_frame(bg=text_bg)
         settings_master_update_label.change(width=100)
@@ -4518,16 +4586,18 @@ def settings_page():
         settings_canvas.columnconfigure(1,weight=1)
         settings_canvas.columnconfigure(2,weight=1)
 
-        settings_file_label.grid(row=0,column=0,columnspan=3,sticky='nsew',pady=10,padx=10)
-        settings_file_open_button.grid(row=1,column=0,sticky='nsew',pady=10,padx=20)
-        settings_file_import_button.grid(row=1,column=1,sticky='nsew',pady=10,padx=20)
-        settings_theme_label.grid(row=2,column=0,columnspan=3,sticky='nsew',pady=10,padx=10)
-        settings_theme_entry.grid(row=3,column=0,columnspan=2,sticky='nsew',pady=5,padx=20)
-        settings_apply_button.grid(row=3,column=2,sticky='nsew',padx=20)
-        settings_master_update_label.grid(row=4,column=0,columnspan=3,sticky='nsew',pady=10,padx=10)
-        settings_master_update_info.grid(row=5,column=0,columnspan=3,sticky='nsew',padx=10)
-        settings_master_update_button.grid(row=6,column=1,sticky='nsew',pady=10,padx=20)
-        settings_master_update_progress.grid(row=7,column=1,sticky='nsew')
+        settings_general_label.grid(row=0,column=0,columnspan=3,sticky='nsew',pady=10,padx=10)
+        settings_romaji_checkbox.grid(row=1,column=0,pady=0,padx=20)
+        settings_file_label.grid(row=2,column=0,columnspan=3,sticky='nsew',pady=10,padx=10)
+        settings_file_open_button.grid(row=3,column=0,sticky='nsew',pady=0,padx=20)
+        settings_file_import_button.grid(row=3,column=1,sticky='nsew',pady=0,padx=20)
+        settings_theme_label.grid(row=4,column=0,columnspan=3,sticky='nsew',pady=10,padx=10)
+        settings_theme_entry.grid(row=5,column=0,columnspan=2,sticky='nsew',pady=5,padx=20)
+        settings_apply_button.grid(row=5,column=2,sticky='nsew',padx=20)
+        settings_master_update_label.grid(row=6,column=0,columnspan=3,sticky='nsew',pady=10,padx=10)
+        settings_master_update_info.grid(row=7,column=0,columnspan=3,sticky='nsew',padx=10)
+        settings_master_update_button.grid(row=8,column=0,columnspan=3,sticky='nsew',pady=10,padx=20)
+        settings_master_update_progress.grid(row=9,column=0,columnspan=3,sticky='nsew',padx=50)
         
         if os.name == 'nt':
             settings_top_menu.bind('<ButtonPress-1>',lambda event:start_move(event,settings))
@@ -4613,6 +4683,22 @@ def import_list():
         settings.lift()
     else:
         settings.lift()
+def allow_result_scroll(*event):
+    global result_scroll
+    result_scroll = True
+def deny_result_scroll(*event):
+    global result_scroll
+    result_scroll = False
+def listbox_arrow_select(event):
+    selection = event.widget.curselection()[0]
+    if event.keysym == 'Up':
+        selection -= 1
+    if event.keysym == 'Down':
+        selection += 1
+    if 0 <= selection < event.widget.size():
+        event.widget.selection_clear(0,'end')
+        event.widget.select_set(selection)
+    search_update(event)
 # Classes
 class static_entry(tk.Frame):
     def __init__(self,master=None,**kwargs):
@@ -4766,7 +4852,7 @@ side_bar_canvas = tk.Canvas(root,bg=side_bar_bg,width=330,highlightthickness=0,h
 side_bar_canvas.bind('<1>',lambda event: side_bar_canvas.focus_set())
 
 side_bar_search_bar = tk.Label(side_bar_canvas,image=search_bar_image,bg=side_bar_bg)
-side_bar_search_box = static_entry(side_bar_canvas,bg=side_bar_bg,fg=text_fg,width=250,height=22,borderwidth=0,font=('MS PMincho',12),highlightthickness=0)
+side_bar_search_box = static_entry(side_bar_canvas,bg=side_bar_bg,fg=text_fg,width=250,height=22,borderwidth=0,font=('MS PMincho',14),highlightthickness=0)
 side_bar_search_box.bind_enter()
 side_bar_search_button = static_button(side_bar_canvas,bg=side_bar_bg,activebackground=side_bar_bg,width=22,height=22,image=search_button_image,borderwidth=0)
 side_bar_search_button.bind_search()
@@ -4781,21 +4867,26 @@ side_bar_list_canvas = tk.Canvas(root,bg=side_bar_bg,highlightthickness=0,border
 
 side_bar_list_scrollbar = tk.Scrollbar(side_bar_list_canvas,orient='vertical',highlightthickness=0,relief='flat')
 
-side_bar_list = static_list(side_bar_list_canvas,bg=side_bar_bg,fg=text_fg,font=('Quattrocento Sans',16,'bold'),yscrollcommand=side_bar_list_scrollbar.set,relief='flat',borderwidth=0,highlightthickness=0,name='words',selectmode='single',selectbackground=highlight_bg)
-side_bar_list.bind(event='<<ListboxSelect>>',command=search_update)
-side_bar_list.bind(event='<Double-Button-1>',command=side_list_double_click)
-side_bar_list.bind(event='<Double-Button-1>',command=side_list_double_click)
-side_bar_list.bind(event='<Return>',command=(lambda e: search_cmd(newtab=False,target=side_bar_search_box.get())))
-side_bar_list.bind(event='<FocusOut>',command=deselect_side_list)
+side_bar_list = tk.Listbox(side_bar_list_canvas,bg=side_bar_bg,fg=text_fg,font=('MS PMincho',20,'bold'),yscrollcommand=side_bar_list_scrollbar.set,relief='flat',borderwidth=0,highlightthickness=0,name='words',selectmode='single',selectbackground=highlight_bg)
+side_bar_list.bind('<<ListboxSelect>>',search_update)
+side_bar_list.bind('<Double-Button-1>',side_list_double_click)
+side_bar_list.bind('<Return>',lambda e: search_cmd(newtab=False,target=side_bar_search_box.get()))
+side_bar_list.bind('<Shift-Return>',lambda e: search_cmd(newtab=True,target=side_bar_search_box.get()))
+side_bar_list.bind('<FocusOut>',deselect_side_list)
+side_bar_list.bind('<Up>',lambda e: listbox_arrow_select(e))
+side_bar_list.bind('<Down>',lambda e: listbox_arrow_select(e))
 
-side_bar_list_scrollbar.configure(command=side_bar_list_global.yview)
-side_bar_list_scrollbar.pack(side='right',fill='y')
-
-side_bar_list.pack()
+side_bar_list_canvas.rowconfigure(0,weight=1)
+side_bar_list_canvas.columnconfigure(0,weight=1)
+side_bar_list_scrollbar.grid(row=0,column=1,sticky='ns')
+side_bar_list.grid(row=0,column=0,sticky='ns')
 
 # Create result area
 result_canvas = tk.Canvas(root,bg=background,width=700,highlightthickness=0,borderwidth=0)
 result_canvas.bind('<1>',lambda event: side_bar_canvas.focus_set())
+result_canvas.bind('<Enter>',allow_result_scroll)
+result_canvas.bind('<Leave>',deny_result_scroll)
+result_canvas.bind_all('<MouseWheel>',scroll_result_page)
 
 result_notebook = ttk.Notebook(result_canvas)
 result_notebook.grid(row=0,column=0,sticky='nsew')
@@ -4804,37 +4895,32 @@ result_notebook.bind('<Button-3>',right_click_tab)
 # Add word pane
 add_word_canvas = tk.Canvas(root,bg=side_bar_bg,width=0,highlightthickness=0)
 def add_word_canvas_animation( *event,dir):
-    width = add_word_canvas.winfo_width()
     if dir == 'in':
-        if width < 280:
-            add_word_canvas.configure(width=width+40)
-            if width < 280:
-                thread1 = threading.Timer(0.01,lambda:add_word_canvas_animation(dir='in'))
-                thread1.start()
+        add_word_canvas.configure(width=280)
     if dir == 'out':
-        if width > 1:
-            add_word_canvas.configure(width=width-40)
-            if width > 0:
-                thread1 = threading.Timer(0.01,lambda:add_word_canvas_animation(dir='out'))
-                thread1.start()
+        add_word_canvas.configure(width=0)
     else:
         cancel_threads()
 def toggle_add_word_canvas(*event,dir):
     width = add_word_canvas.winfo_width()
-    if width > 20:
+    if width == 280:
         add_word_canvas_animation(dir='out')
+        thread1 = threading.Timer(0.02,adjust_page_canvas)
+        thread1.start()
     else:
         add_word_canvas_animation(dir='in')
+        thread1 = threading.Timer(0.02,adjust_page_canvas)
+        thread1.start()
 add_word_button.bind(event='<Button-1>',command=(lambda e: toggle_add_word_canvas(dir='in')))
 
 add_word_header = static_label(add_word_canvas,bg=title_bg,fg=text_fg,text='Add word',anchor='c',font=('Quattrocento Sans',16),width=280)
 
 add_word_word_label = static_label(add_word_canvas,bg=side_bar_bg,fg=text_fg,text='Word',anchor='e',font=('Quattrocento Sans',14),width=11)
-add_word_word_entry = static_entry(add_word_canvas,bg=text_bg,fg=text_fg,font=('Quattrocento Sans',12),width=120,height=25,relief='flat')
+add_word_word_entry = static_entry(add_word_canvas,bg=text_bg,fg=text_fg,font=('MS PMincho',14),width=120,height=25,relief='flat')
 add_word_hiragana_label = static_label(add_word_canvas,bg=side_bar_bg,fg=text_fg,text='Hiragana',anchor='e',font=('Quattrocento Sans',14),width=11)
-add_word_hiragana_entry = static_entry(add_word_canvas,bg=text_bg,fg=text_fg,font=('Quattrocento Sans',12),width=120,height=25,relief='flat')
+add_word_hiragana_entry = static_entry(add_word_canvas,bg=text_bg,fg=text_fg,font=('MS PMincho',14),width=120,height=25,relief='flat')
 add_word_romaji_label = static_label(add_word_canvas,bg=side_bar_bg,fg=text_fg,text='Romaji',anchor='e',font=('Quattrocento Sans',14),width=11)
-add_word_romaji_entry = static_entry(add_word_canvas,bg=text_bg,fg=text_fg,font=('Quattrocento Sans',12),width=120,height=25,relief='flat')
+add_word_romaji_entry = static_entry(add_word_canvas,bg=text_bg,fg=text_fg,font=('MS PMincho',14),width=120,height=25,relief='flat')
 add_word_trans_label = static_label(add_word_canvas,bg=side_bar_bg,fg=text_fg,text='Translation',anchor='e',font=('Quattrocento Sans',14),width=11)
 add_word_trans_entry = static_entry(add_word_canvas,bg=text_bg,fg=text_fg,font=('Quattrocento Sans',12),width=120,height=25,relief='flat')
 add_word_mora_label = static_label(add_word_canvas,bg=side_bar_bg,fg=text_fg,text='Mora count',anchor='e',font=('Quattrocento Sans',14),width=20)
@@ -4882,9 +4968,9 @@ welcome_paragraph2 = tk.Message(welcome_frame,bg=background,fg=text_fg,text='Pit
 welcome_title.pack(padx=10)
 welcome_subtitle.pack(padx=10)
 welcome_heading1.pack(padx=10)
-welcome_paragraph1.pack(padx=10)
+welcome_paragraph1.pack(padx=0)
 welcome_heading2.pack(padx=10)
-welcome_paragraph2.pack(padx=10)
+welcome_paragraph2.pack(padx=0)
 
 result_notebook.add(welcome_frame,text='Welcome')
 result_notebook.bind('<<NotebookTabChanged>>',adjust_page_canvas)
@@ -4904,6 +4990,7 @@ root.grid_rowconfigure(4,weight=1,minsize=0)
 # Adjust on window resize
 result_canvas.bind('<Configure>',resize_results_canvas)
 
+
 # Build grid
 if os.name == 'nt':
     top_menu_canvas.grid(row=0,column=0,columnspan=3,sticky='nsew')
@@ -4911,7 +4998,7 @@ pitchi_title_canvas.grid(row=1,column=0,rowspan=2,sticky='nsew')
 top_header_canvas.grid(row=1,column=1,sticky='nsew')
 result_canvas.grid(row=2,column=1,rowspan=3,sticky='nsew')
 side_bar_canvas.grid(row=3,column=0,rowspan=1,sticky='nsew')
-side_bar_list_canvas.grid(row=4,column=0,sticky='nwse')
+side_bar_list_canvas.grid(row=4,column=0,sticky='nsew')
 
 add_word_canvas.grid(row=1,column=2,rowspan=4,sticky='ns')
 
@@ -4926,7 +5013,5 @@ root_bot_right_corner.lift()
 root_bot_right_corner.place(relx=1.0,rely=1.0,anchor='se')
 
 populate_side_bar_list()
-
-resize_results_canvas(event='')
 
 root.mainloop()
