@@ -186,3 +186,90 @@ translation = younger sister
 notes = 
 	
 
+[会計学]
+hira = かいけいがく
+romaji = kaikeigaku
+mora = 6
+pap = 3
+translation = accounting
+notes = 
+	
+
+[農学 ]
+hira = のうがく
+romaji = nōgaku
+mora = 4
+pap = 0
+translation = agriculture
+notes = 
+	
+
+[畜産]
+hira = ちくきん
+romaji = chikusan
+mora = 4
+pap = 0
+translation = animal husbandry
+notes = 
+	
+
+[人類学]
+hira = じんるいがく
+romaji = jinruigaku
+mora = 6
+pap = 3
+translation = anthropology
+notes = 
+	
+
+[考古学]
+hira = こうこがく
+romaji = kōkogaku
+mora = 5
+pap = 3
+translation = archaeology
+notes = 
+	
+
+[建築学]
+hira = けんちくがく
+romaji = kenchikugaku
+mora = 6
+pap = 4
+translation = architecture
+notes = 
+	
+
+[美術]
+hira = びじゅつ
+romaji = bijutsu
+mora = 4
+pap = 1
+translation = art
+notes = 
+	
+
+[美術史]
+hira = びじゅつし
+romaji = bujutsushi
+mora = 5
+pap = 3
+translation = art history
+notes = 
+	
+[天文学]
+hira = てんもんがく
+romaji = tenmongaku
+mora = 6
+pap = 3
+translation = astronomy
+notes = 
+	
+
+[天体物理学]
+hira = てんたいぶつりがく
+romaji = tentai butsurigaku
+mora = 9
+pap = 7
+translation = astrophysics
+notes = 
