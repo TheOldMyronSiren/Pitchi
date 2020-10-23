@@ -3676,6 +3676,11 @@ settings_psuedo = None
 settings_frame = None
 dl_progress = 0
 result_scroll = False
+search_var = tk.StringVar()
+internal_word_list = []
+internal_hira_list = []
+internal_romaji_list = []
+internal_trans_list = []
 
 # Result pages variables
 current_page = 0
@@ -3895,7 +3900,21 @@ def redraw_pap(page):
             else:
                 pap_list.append('0')
         pap_list.append('0') # This is the particle
-    if int(word_pap) >= 6:
+    if int(word_pap) == 6:
+        for mora_pap in range (0,int(word_mora)):
+            if mora_pap == 1 or mora_pap == 2 or mora_pap == 3 or mora_pap == 4 or mora_pap == 5:
+                pap_list.append('1')
+            else:
+                pap_list.append('0')
+        pap_list.append('0') # This is the particle
+    if int(word_pap) == 7:
+        for mora_pap in range (0,int(word_mora)):
+            if mora_pap == 1 or mora_pap == 2 or mora_pap == 3 or mora_pap == 4 or mora_pap == 5 or mora_pap == 6:
+                pap_list.append('1')
+            else:
+                pap_list.append('0')
+        pap_list.append('0') # This is the particle
+    if int(word_pap) == 8:
         for mora_pap in range (0,int(word_mora)):
             if mora_pap == 0:
                 pap_list.append('0')
@@ -3971,7 +3990,21 @@ def draw_pap(word_pap,word_mora,word,page):
             else:
                 pap_list.append('0')
         pap_list.append('0') # This is the particle
-    if int(word_pap) >= 6:
+    if int(word_pap) == 6:
+        for mora_pap in range (0,int(word_mora)):
+            if mora_pap == 1 or mora_pap == 2 or mora_pap == 3 or mora_pap == 4 or mora_pap == 5:
+                pap_list.append('1')
+            else:
+                pap_list.append('0')
+        pap_list.append('0') # This is the particle
+    if int(word_pap) == 7:
+        for mora_pap in range (0,int(word_mora)):
+            if mora_pap == 1 or mora_pap == 2 or mora_pap == 3 or mora_pap == 4 or mora_pap == 5 or mora_pap == 6:
+                pap_list.append('1')
+            else:
+                pap_list.append('0')
+        pap_list.append('0') # This is the particle
+    if int(word_pap) == 8:
         for mora_pap in range (0,int(word_mora)):
             if mora_pap == 0:
                 pap_list.append('0')
@@ -4044,24 +4077,50 @@ def search_cmd(*a,newtab,target):
             word_notes_list.insert(current_page-1,word_notes)
             redraw_pap(current_page)
             adjust_page_canvas()
-    search_clear()
 def recount_words():
     global word_count
     global word_count_label_var
     global internal_word_list
+    global internal_hira_list
+    global internal_romaji_list
+    global internal_trans_list
     word_lst_info = configparser.ConfigParser()
     list_path = active_list + '.lst'
     word_lst_info.read(unipath.joinpath(words_l_dir,list_path),encoding='utf-8')
     internal_word_list = word_lst_info.sections()
     word_count = len(internal_word_list)
-    internal_word_list.sort()
+    for i in range(0,word_count-1):
+        internal_hira_list.insert(i,word_lst_info.get(internal_word_list[i],'hira'))
+        internal_romaji_list.insert(i,word_lst_info.get(internal_word_list[i],'romaji'))
+        internal_trans_list.insert(i,word_lst_info.get(internal_word_list[i],'translation'))
     word_count_label_var.set('Total words loaded: ' + str(word_count))
 def populate_side_bar_list():
     global word_count
     global internal_word_list
     side_bar_list.delete(0,'end')
+    sorted_internal_word_list = internal_word_list.copy()
+    sorted_internal_word_list.sort()
     for i in range(word_count):
-        side_bar_list.insert(i,internal_word_list[i])
+        side_bar_list.insert(i,sorted_internal_word_list[i])
+def search_side_bar_list(*args):
+    result_list = []
+    search_term = side_bar_search_box.get()
+    side_bar_list.delete(0,'end')
+    for i in range(0,word_count):
+        if search_term.lower() in internal_word_list[i]:
+            result_list.insert(i,internal_word_list[i])
+        elif search_term.lower() in internal_hira_list[i]:
+            result_list.insert(i,internal_word_list[i])
+        elif search_term.lower() in internal_romaji_list[i]:
+            result_list.insert(i,internal_word_list[i])
+        elif search_term.lower() in internal_trans_list[i]:
+            result_list.insert(i,internal_word_list[i])
+    result_list.sort()
+    for i in range(0,len(result_list)):
+        side_bar_list.insert('end',result_list[i])
+
+search_var.trace('w',search_side_bar_list)
+
 def grab_resize(event):
     mx = root.winfo_pointerx()
     my = root.winfo_pointery()
@@ -4159,12 +4218,6 @@ def draw_header_lines():
     h = top_header_canvas.winfo_height()
     top_header_canvas.delete('lines')
     top_header_canvas.create_line(top_header_active_list_label.winfo_x()+top_header_active_list_label.winfo_width()+5,2,top_header_active_list_label.winfo_x()+top_header_active_list_label.winfo_width()+5,h-2,width=1,fill='gray',tags='lines')
-def search_update(event):
-    side_list = event.widget
-    index = int(side_list.curselection()[0])
-    word = side_list.get(index)
-    side_bar_search_box.delete(start=0,finish='end')
-    side_bar_search_box.insert(start=0,text=word)
 def search_clear():
     side_bar_search_box.delete(start=0,finish='end')
 def list_search(event):
@@ -4172,9 +4225,16 @@ def list_search(event):
     index = int(side_list.curselection()[0])
     word = side_list.get(index)
     side_bar_search_box.delete(start=0,finish='end')
-    side_bar_search_box.insert(start=0,text=word)
     search_cmd(newtab=True,target=word)
     side_bar_search_box.delete(start=0,finish='end')
+def search_box_list_search(*event):
+    if side_bar_list.curselection()[0] != '':
+        index = int(side_bar_list.curselection()[0])
+        word = side_bar_list.get(index)
+        if keyboard.is_pressed('shift'):
+            search_cmd(newtab=True,target=word)
+        else:
+            search_cmd(newtab=False,target=word)
 def side_list_double_click(event):
     side_list = event.widget
     index = int(side_list.curselection()[0])
@@ -4221,58 +4281,71 @@ def check_word_exists(word):
         return 'exists'
     else:
         return 'free'
-def add_word_cmd():
-    word = add_word_word_entry.get()
-    hira = add_word_hiragana_entry.get()
-    romaji = add_word_romaji_entry.get()
-    trans = add_word_trans_entry.get()
-    mora = add_word_mora_entry.get()
-    pap = str(add_word_pap_var.get())
-    notes = add_word_notes_textbox.get()
-    if check_word_exists(word) == 'free':
-        if word == '':
-            tkMessageBox.showinfo(title='Add word error',message='You must fill out at least the word entry box!')
-        elif romaji == '' or trans == '' or mora == '' or pap == '':
-            if tkMessageBox.askquestion(title='Confirm entry',message='Some of the required fields are empty! \nAre you sure you want to add this word?'):
-                add_word_info = configparser.ConfigParser()
-                add_word_info.add_section(word)
-                add_word_info.set(word,'hira',hira)
-                add_word_info.set(word,'romaji',romaji)
-                add_word_info.set(word,'mora',mora)
-                add_word_info.set(word,'pap',pap)
-                add_word_info.set(word,'translation',trans)
-                add_word_info.set(word,'notes',notes)
-                add_word_info_file = open(unipath.joinpath(words_l_dir,active_list,'.lst'),'a',encoding='utf-8')
-                add_word_info.write(add_word_info_file)
-                add_word_info_file.close()
-                add_word_word_entry.delete(0,'end')
-                add_word_hiragana_entry.delete(0,'end')
-                add_word_romaji_entry.delete(0,'end')
-                add_word_trans_entry.delete(0,'end')
-                add_word_mora_entry.delete(0,'end')
-                add_word_pap_var.set(0)
-                add_word_notes_textbox.delete()
-        else:
-            add_word_info = configparser.ConfigParser()
-            add_word_info.add_section(word)
-            add_word_info.set(word,'hira',hira)
-            add_word_info.set(word,'romaji',romaji)
-            add_word_info.set(word,'mora',mora)
-            add_word_info.set(word,'pap',pap)
-            add_word_info.set(word,'translation',trans)
-            add_word_info.set(word,'notes',notes)
-            add_word_info_file = open(unipath.joinpath(words_l_dir,active_list+'.lst'),'a',encoding='utf-8')
-            add_word_info.write(add_word_info_file)
-            add_word_info_file.close()
-            add_word_word_entry.delete(0,'end')
-            add_word_hiragana_entry.delete(0,'end')
-            add_word_romaji_entry.delete(0,'end')
-            add_word_trans_entry.delete(0,'end')
-            add_word_mora_entry.delete(0,'end')
-            add_word_pap_var.set(0)
-            add_word_notes_textbox.delete()
+def write_word(word,hira,romaji,mora,pap,trans,notes):
+    add_word_info = configparser.ConfigParser()
+    add_word_info.add_section(word)
+    add_word_info.set(word,'hira',hira)
+    add_word_info.set(word,'romaji',romaji)
+    add_word_info.set(word,'mora',mora)
+    add_word_info.set(word,'pap',pap)
+    add_word_info.set(word,'translation',trans)
+    add_word_info.set(word,'notes',notes)
+    add_word_info_file = open(unipath.joinpath(words_l_dir,active_list+'.lst'),'a',encoding='utf-8')
+    add_word_info.write(add_word_info_file)
+    add_word_info_file.close()
+    add_word_word_entry.delete(0,'end')
+    add_word_hiragana_entry.delete(0,'end')
+    add_word_romaji_entry.delete(0,'end')
+    add_word_trans_entry.delete(0,'end')
+    add_word_mora_entry.delete(0,'end')
+    add_word_pap_var.set(0)
+    add_word_notes_textbox.delete()
     recount_words()
     populate_side_bar_list()
+def add_word_cmd():
+    word = add_word_word_entry.get().replace('\n','').replace('\r','').replace('\t','')
+    hira = add_word_hiragana_entry.get().replace('\n','').replace('\r','').replace('\t','')
+    romaji = add_word_romaji_entry.get().replace('\n','').replace('\r','').replace('\t','')
+    trans = add_word_trans_entry.get().replace('\n','').replace('\r','').replace('\t','')
+    mora = add_word_mora_entry.get().replace('\n','').replace('\r','').replace('\t','')
+    pap = str(add_word_pap_var.get())
+    notes = add_word_notes_textbox.get()
+    if word == '' or hira == '':
+        tkMessageBox.showinfo(title='Add word error',message='You must enter at least the word and its hiragana to add it.')
+    else:
+        if mora == '':
+            mora = str(len(hira))
+        if len(hira.replace(' ','')) == int(mora):
+            if check_word_exists(word) == 'free':
+                if word == '':
+                    tkMessageBox.showinfo(title='Add word error',message='You must fill out at least the word entry box!')
+                    return
+                elif romaji == '' or trans == '' or mora == '' or pap == '':
+                    if tkMessageBox.askquestion(title='Empty fields',message='Some fields are empty! \nDo you still want to add this word?') == 'yes':
+                        write_word(word,hira,romaji,mora,pap,trans,notes)
+                    else:
+                        return
+                else:
+                    write_word(word,hira,romaji,mora,pap,trans,notes)
+            else:
+                tkMessageBox.showinfo(title='Add word error',message=str(word)+' already exists!')
+        else:
+            if tkMessageBox.askquestion(title='Mora count mismatch',message='Your mora count might not match the hiragana you entered! \nDo you still want to add this word?') == 'yes':
+                if check_word_exists(word) == 'free':
+                    if word == '':
+                        tkMessageBox.showinfo(title='Add word error',message='You must fill out at least the word entry box!')
+                        return
+                    elif romaji == '' or trans == '' or mora == '' or pap == '':
+                        if tkMessageBox.askquestion(title='Empty fields',message='Some fields are empty! \nDo you still want to add this word?'):
+                            write_word(word,hira,romaji,mora,pap,trans,notes)
+                        else:
+                            return
+                    else:
+                        write_word(word,hira,romaji,mora,pap,trans,notes)
+                else:
+                    tkMessageBox.showinfo(title='Add word error',message=str(word)+' already exists!')
+            else:
+                return
 def close_windows():
     global settings
     global settings_psuedo
@@ -4334,6 +4407,7 @@ def update_widgets():
         top_menu_canvas_close.change(bg=top_menu_bg,activebackground=top_menu_bg,image=exit_button_image)
         top_menu_canvas_max.change(bg=top_menu_bg,activebackground=top_menu_bg,image=max_button_image)
         top_menu_canvas_mini.change(bg=top_menu_bg,activebackground=top_menu_bg,image=mini_button_image)
+    root.configure(bg=background)
     # Update settings window
     settings_canvas.configure(bg=background)
     settings_frame.configure(bg=half_color(background))
@@ -4690,15 +4764,23 @@ def deny_result_scroll(*event):
     global result_scroll
     result_scroll = False
 def listbox_arrow_select(event):
-    selection = event.widget.curselection()[0]
+    if side_bar_list.curselection():
+        pass
+    else:
+        side_bar_list.selection_set(0)
+        return
+    if event.keysym == 'Up' and side_bar_list.curselection()[0] == 0:
+        side_bar_list.selection_clear(0)
+        return
+    selection = side_bar_list.curselection()[0]
     if event.keysym == 'Up':
         selection -= 1
     if event.keysym == 'Down':
         selection += 1
-    if 0 <= selection < event.widget.size():
-        event.widget.selection_clear(0,'end')
-        event.widget.select_set(selection)
-    search_update(event)
+    if 0 <= selection < side_bar_list.size():
+        side_bar_list.selection_clear(0,'end')
+        side_bar_list.select_set(selection)
+        side_bar_list.see(selection)
 # Classes
 class static_entry(tk.Frame):
     def __init__(self,master=None,**kwargs):
@@ -4709,8 +4791,10 @@ class static_entry(tk.Frame):
         self.entry.configure(width=1)
         self.entry.grid(row=0,column=0,stick='nsew')
         self.config = self.entry.config
+    def bind(self,event,command):
+        self.entry.bind(event,command)
     def bind_enter(self):
-        self.entry.bind('<Return>',lambda e: search_cmd(newtab=False,target=side_bar_search_box.get()))
+        self.entry.bind('<Return>',search_box_list_search)
     def change(self,**kwargs):
         self.entry.configure(**kwargs)
     def delete(self,start,finish):
@@ -4852,7 +4936,7 @@ side_bar_canvas = tk.Canvas(root,bg=side_bar_bg,width=330,highlightthickness=0,h
 side_bar_canvas.bind('<1>',lambda event: side_bar_canvas.focus_set())
 
 side_bar_search_bar = tk.Label(side_bar_canvas,image=search_bar_image,bg=side_bar_bg)
-side_bar_search_box = static_entry(side_bar_canvas,bg=side_bar_bg,fg=text_fg,width=250,height=22,borderwidth=0,font=('MS PMincho',14),highlightthickness=0)
+side_bar_search_box = static_entry(side_bar_canvas,bg=side_bar_bg,fg=text_fg,width=250,height=22,borderwidth=0,font=('Quattrocento Sans',12),highlightthickness=0,textvariable=search_var)
 side_bar_search_box.bind_enter()
 side_bar_search_button = static_button(side_bar_canvas,bg=side_bar_bg,activebackground=side_bar_bg,width=22,height=22,image=search_button_image,borderwidth=0)
 side_bar_search_button.bind_search()
@@ -4862,24 +4946,27 @@ side_bar_canvas.create_window(150,25,window=side_bar_search_bar)
 side_bar_canvas.create_window(150,25,window=side_bar_search_box)
 side_bar_canvas.create_window(310,25,window=side_bar_search_button)
 
+side_bar_search_box.bind('<Up>',listbox_arrow_select)
+side_bar_search_box.bind('<Down>',listbox_arrow_select)
+
 # Create side bar list
 side_bar_list_canvas = tk.Canvas(root,bg=side_bar_bg,highlightthickness=0,borderwidth=0)
 
 side_bar_list_scrollbar = tk.Scrollbar(side_bar_list_canvas,orient='vertical',highlightthickness=0,relief='flat')
 
-side_bar_list = tk.Listbox(side_bar_list_canvas,bg=side_bar_bg,fg=text_fg,font=('MS PMincho',20,'bold'),yscrollcommand=side_bar_list_scrollbar.set,relief='flat',borderwidth=0,highlightthickness=0,name='words',selectmode='single',selectbackground=highlight_bg)
-side_bar_list.bind('<<ListboxSelect>>',search_update)
+side_bar_list = tk.Listbox(side_bar_list_canvas,bg=side_bar_bg,fg=text_fg,font=('Quattrocento Sans',18),yscrollcommand=side_bar_list_scrollbar.set,relief='flat',borderwidth=0,highlightthickness=0,name='words',selectmode='single',selectbackground=highlight_bg,activestyle='none')
+side_bar_list_scrollbar.configure(command=side_bar_list.yview)
 side_bar_list.bind('<Double-Button-1>',side_list_double_click)
-side_bar_list.bind('<Return>',lambda e: search_cmd(newtab=False,target=side_bar_search_box.get()))
-side_bar_list.bind('<Shift-Return>',lambda e: search_cmd(newtab=True,target=side_bar_search_box.get()))
+side_bar_list.bind('<Return>',lambda e: search_cmd(newtab=False,target=side_bar_list.selection_get()))
+side_bar_list.bind('<Shift-Return>',lambda e: search_cmd(newtab=True,target=side_bar_list.selection_get()))
 side_bar_list.bind('<FocusOut>',deselect_side_list)
-side_bar_list.bind('<Up>',lambda e: listbox_arrow_select(e))
-side_bar_list.bind('<Down>',lambda e: listbox_arrow_select(e))
+side_bar_list.bind('<Up>',listbox_arrow_select)
+side_bar_list.bind('<Down>',listbox_arrow_select)
 
 side_bar_list_canvas.rowconfigure(0,weight=1)
 side_bar_list_canvas.columnconfigure(0,weight=1)
 side_bar_list_scrollbar.grid(row=0,column=1,sticky='ns')
-side_bar_list.grid(row=0,column=0,sticky='ns')
+side_bar_list.grid(row=0,column=0,sticky='nsew')
 
 # Create result area
 result_canvas = tk.Canvas(root,bg=background,width=700,highlightthickness=0,borderwidth=0)
@@ -4916,11 +5003,11 @@ add_word_button.bind(event='<Button-1>',command=(lambda e: toggle_add_word_canva
 add_word_header = static_label(add_word_canvas,bg=title_bg,fg=text_fg,text='Add word',anchor='c',font=('Quattrocento Sans',16),width=280)
 
 add_word_word_label = static_label(add_word_canvas,bg=side_bar_bg,fg=text_fg,text='Word',anchor='e',font=('Quattrocento Sans',14),width=11)
-add_word_word_entry = static_entry(add_word_canvas,bg=text_bg,fg=text_fg,font=('MS PMincho',14),width=120,height=25,relief='flat')
+add_word_word_entry = static_entry(add_word_canvas,bg=text_bg,fg=text_fg,font=('Quattrocento Sans',14),width=120,height=25,relief='flat')
 add_word_hiragana_label = static_label(add_word_canvas,bg=side_bar_bg,fg=text_fg,text='Hiragana',anchor='e',font=('Quattrocento Sans',14),width=11)
-add_word_hiragana_entry = static_entry(add_word_canvas,bg=text_bg,fg=text_fg,font=('MS PMincho',14),width=120,height=25,relief='flat')
+add_word_hiragana_entry = static_entry(add_word_canvas,bg=text_bg,fg=text_fg,font=('Quattrocento Sans',14),width=120,height=25,relief='flat')
 add_word_romaji_label = static_label(add_word_canvas,bg=side_bar_bg,fg=text_fg,text='Romaji',anchor='e',font=('Quattrocento Sans',14),width=11)
-add_word_romaji_entry = static_entry(add_word_canvas,bg=text_bg,fg=text_fg,font=('MS PMincho',14),width=120,height=25,relief='flat')
+add_word_romaji_entry = static_entry(add_word_canvas,bg=text_bg,fg=text_fg,font=('Quattrocento Sans',14),width=120,height=25,relief='flat')
 add_word_trans_label = static_label(add_word_canvas,bg=side_bar_bg,fg=text_fg,text='Translation',anchor='e',font=('Quattrocento Sans',14),width=11)
 add_word_trans_entry = static_entry(add_word_canvas,bg=text_bg,fg=text_fg,font=('Quattrocento Sans',12),width=120,height=25,relief='flat')
 add_word_mora_label = static_label(add_word_canvas,bg=side_bar_bg,fg=text_fg,text='Mora count',anchor='e',font=('Quattrocento Sans',14),width=20)
