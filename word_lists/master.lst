@@ -121,7 +121,7 @@ notes = Used informally, おやすみなさい is the more polite variation.
 [いっしょに]
 hira = いっしょに
 romaji = isshoni
-mora = 5
+mora = 3
 pap = 0
 translation = together
 notes = 
@@ -191,8 +191,8 @@ hira = かいけいがく
 romaji = kaikeigaku
 mora = 6
 pap = 3
-translation = accounting
-notes = 
+translation = Accounting
+notes = In regards to a college major
 	
 
 [農学 ]
@@ -200,8 +200,8 @@ hira = のうがく
 romaji = nōgaku
 mora = 4
 pap = 0
-translation = agriculture
-notes = 
+translation = Agriculture
+notes = In regards to a college major
 	
 
 [畜産]
@@ -209,8 +209,8 @@ hira = ちくきん
 romaji = chikusan
 mora = 4
 pap = 0
-translation = animal husbandry
-notes = 
+translation = Animal Husbandry
+notes = In regards to a college major
 	
 
 [人類学]
@@ -218,8 +218,8 @@ hira = じんるいがく
 romaji = jinruigaku
 mora = 6
 pap = 3
-translation = anthropology
-notes = 
+translation = Anthropology
+notes = In regards to a college major
 	
 
 [考古学]
@@ -236,8 +236,8 @@ hira = けんちくがく
 romaji = kenchikugaku
 mora = 6
 pap = 4
-translation = architecture
-notes = 
+translation = Architecture
+notes = In regards to a college major
 	
 
 [美術]
@@ -245,8 +245,8 @@ hira = びじゅつ
 romaji = bijutsu
 mora = 4
 pap = 1
-translation = art
-notes = 
+translation = Art
+notes = In regards to a college major
 	
 
 [美術史]
@@ -254,22 +254,195 @@ hira = びじゅつし
 romaji = bujutsushi
 mora = 5
 pap = 3
-translation = art history
-notes = 
+translation = Art History
+notes = In regards to a college major
 	
 [天文学]
 hira = てんもんがく
 romaji = tenmongaku
 mora = 6
 pap = 3
-translation = astronomy
-notes = 
+translation = Astronomy
+notes = In regards to a college major
 	
 
 [天体物理学]
 hira = てんたいぶつりがく
-romaji = tentai butsurigaku
+romaji = tentai-butsurigaku
 mora = 9
 pap = 7
-translation = astrophysics
+translation = Astrophysics
+notes = In regards to a college major
+
+
+[生物化学]
+hira = せいぶつかがく
+romaji = sei(butsu)-kagaku
+mora = 7
+pap = 5
+translation = Biochemistry
+notes = In regards to a college major
+	
+
+[細菌学]
+hira = さいきんがく
+romaji = saikingaku
+mora = 6
+pap = 3
+translation = Bacteriology
+notes = In regards to a college major
+	
+
+[生物学]
+hira = せいぶつがく
+romaji = seibutsugaku
+mora = 6
+pap = 4
+translation = Biology
+notes = In regards to a college major
+	
+
+[生物物理学]
+hira = せいぶつぶつりがく
+romaji = sei(butsu)-butsurigaku
+mora = 9
+pap = 7
+translation = Biophysics
+notes = In regards to a college major
+	
+
+[植物学]
+hira = しょくぶつがく
+romaji = shokubutsugaku
+mora = 6
+pap = 4
+translation = Botany
+notes = In regards to a college major
+	
+
+[経営学]
+hira = けいえいがく
+romaji = keiegaku
+mora = 6
+pap = 3
+translation = Business Administration
+notes = In regards to a college major
+	
+
+[化学工学]
+hira = かがくこうがく
+romaji = kagakukougaku
+mora = 7
+pap = 4
+translation = Chemical Engineering
+notes = In regards to a college major
+	
+
+[化学]
+hira = かがく
+romaji = kagaku
+mora = 3
+pap = 1
+translation = Chemistry
+notes = In regards to a college major
+	
+
+[土木工学]
+hira = どぼくこうがく
+romaji = doboku-kogaku
+mora = 7
+pap = 4
+translation = Civil Engineering
+notes = In regards to a college major
+	
+
+[会う]
+hira = あう
+romaji = au
+mora = 2
+pap = 1
+translation = meet
 notes = 
+	
+
+[明るい]
+hira = あかるい
+romaji = akarui
+mora = 4
+pap = 3
+translation = bright, cheerful
+notes = 
+	
+
+[秋]
+hira = あき
+romaji = aki
+mora = 2
+pap = 1
+translation = autumn
+notes = 
+	
+
+[秋葉原]
+hira = あきはばら
+romaji = Akihabara
+mora = 5
+pap = 3
+translation = Akihabara
+notes = Akihabara is a buzzing shopping hub famed for its electronics retailers, ranging from tiny stalls to vast department stores.
+	
+
+[開く]
+hira = あく
+romaji = aku
+mora = 2
+pap = 2
+translation = open (intransitive)
+notes = 
+	
+
+[上げる]
+hira = あげる
+romaji = ageru
+mora = 3
+pap = 0
+translation = give
+notes = 
+	
+
+[朝]
+hira = あさ
+romaji = asa
+mora = 2
+pap = 1
+translation = morning
+notes = 
+	
+
+[浅草]
+hira = あさくさ
+romaji = asakusa
+mora = 4
+pap = 0
+translation = Asakusa
+notes = Asakusa retains the vibe of an older Tokyo, with traditional craft shops and street-food stalls along Nakamise Street near the ancient Sensō-ji temple.
+	
+
+[朝ごはん]
+hira = あさごはん
+romaji = asagohan
+mora = 5
+pap = 3
+translation = breakfast
+notes = 
+	
+
+[明後日]
+hira = あさって
+romaji = asatte
+mora = 3
+pap = 2
+translation = day after tomorrow
+notes = 
+	
+
